@@ -1,0 +1,1 @@
+export const SCRIPT_URL = "PASTE_APPS_SCRIPT_URL_HERE";
