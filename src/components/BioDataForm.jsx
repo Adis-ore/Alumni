@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SCRIPT_URL } from "../config.js";
 
 /* ------------------------------------------------------------------
@@ -93,6 +93,40 @@ function buildRecord(values) {
     willingToSupport: values.willingToSupport,
     consent: values.consent ? "Yes" : "No",
   };
+}
+
+// Saved answers survive page refreshes until the form is successfully submitted.
+const DRAFT_KEY = "alumni-biodata-draft";
+
+function loadDraft() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
+    if (!saved || typeof saved !== "object") return INITIAL_VALUES;
+    // Only keep known keys, so old or tampered drafts can't break the form.
+    const merged = { ...INITIAL_VALUES };
+    for (const key of Object.keys(INITIAL_VALUES)) {
+      if (typeof saved[key] === typeof INITIAL_VALUES[key]) merged[key] = saved[key];
+    }
+    return merged;
+  } catch {
+    return INITIAL_VALUES;
+  }
+}
+
+function saveDraft(values) {
+  try {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(values));
+  } catch {
+    // Storage full or blocked (e.g. private mode): the form still works, just without saving.
+  }
+}
+
+function clearDraft() {
+  try {
+    localStorage.removeItem(DRAFT_KEY);
+  } catch {
+    // Nothing to clear if storage is unavailable.
+  }
 }
 
 /* ------------------------------------------------------------------
@@ -245,11 +279,16 @@ function ReviewModal({ record, error, submitting, onEdit, onConfirm }) {
    COMPONENT
    ------------------------------------------------------------------ */
 export default function BioDataForm({ onSuccess }) {
-  const [values, setValues] = useState(INITIAL_VALUES);
+  const [values, setValues] = useState(loadDraft);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [confirming, setConfirming] = useState(false);
+
+  // Save every change so a refresh picks up where the user left off.
+  useEffect(() => {
+    saveDraft(values);
+  }, [values]);
 
   const inputClass = (key) => `${baseInput} ${errors[key] ? errInput : okInput}`;
   const errorProps = (key) => ({
@@ -308,6 +347,7 @@ export default function BioDataForm({ onSuccess }) {
         mode: "no-cors",
         body: payload,
       });
+      clearDraft();
       onSuccess({ fullName: record.fullName, email: record.email });
     } catch {
       setSubmitError(
