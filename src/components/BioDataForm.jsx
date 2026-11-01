@@ -4,7 +4,7 @@ import { SCRIPT_URL } from "../config.js";
 /* ------------------------------------------------------------------
    EDITABLE OPTIONS — change these arrays to update the dropdowns
    ------------------------------------------------------------------ */
-const START_YEAR = 1980; // first graduation year offered (set to your school's first intake)
+const START_YEAR = 2008; // first graduation year offered; the list runs up to the current year
 const HOUSES = ["HOUSE 1", "HOUSE 2", "HOUSE 3", "HOUSE 4"];
 const QUALIFICATIONS = [
   "SSCE",
@@ -40,6 +40,7 @@ const INITIAL_VALUES = {
   phone: "",
   city: "",
   country: "Nigeria",
+  countryOther: "",
   gradYear: "",
   classArm: "",
   house: "",
@@ -49,6 +50,50 @@ const INITIAL_VALUES = {
   willingToSupport: "",
   consent: false,
 };
+
+// Fields shown in the confirmation step, in display order.
+const REVIEW_FIELDS = [
+  ["fullName", "Full name"],
+  ["nickname", "Nickname in school"],
+  ["gender", "Gender"],
+  ["birthday", "Birthday"],
+  ["email", "Email address"],
+  ["phone", "Phone / WhatsApp"],
+  ["city", "Current city / state"],
+  ["country", "Country"],
+  ["gradYear", "Year of graduation"],
+  ["classArm", "Class / arm"],
+  ["house", "House"],
+  ["post", "Post held in school"],
+  ["occupation", "Occupation"],
+  ["qualification", "Highest qualification"],
+  ["willingToSupport", "Willing to support / mentor"],
+];
+
+// Builds the exact values that get sent (and shown on the confirmation screen).
+function buildRecord(values) {
+  return {
+    fullName: values.fullName.trim(),
+    nickname: values.nickname.trim(),
+    gender: values.gender,
+    birthday:
+      values.birthdayDay && values.birthdayMonth
+        ? `${values.birthdayDay} ${values.birthdayMonth}`
+        : "",
+    email: values.email.trim(),
+    phone: values.phone.trim(),
+    city: values.city.trim(),
+    country: values.country === "Other" ? values.countryOther.trim() : values.country,
+    gradYear: values.gradYear,
+    classArm: values.classArm.trim(),
+    house: values.house,
+    post: values.post.trim(),
+    occupation: values.occupation.trim(),
+    qualification: values.qualification,
+    willingToSupport: values.willingToSupport,
+    consent: values.consent ? "Yes" : "No",
+  };
+}
 
 /* ------------------------------------------------------------------
    VALIDATION
@@ -76,6 +121,9 @@ function validate(values) {
 
   if (!values.city.trim()) errors.city = "Current city / state is required.";
   if (!values.gradYear) errors.gradYear = "Select your year of graduation.";
+  if (values.country === "Other" && !values.countryOther.trim()) {
+    errors.countryOther = "Type your country name.";
+  }
   if (!values.consent) errors.consent = "You must agree before submitting.";
 
   return errors;
@@ -127,6 +175,72 @@ function Spinner() {
   );
 }
 
+function ReviewModal({ record, error, submitting, onEdit, onConfirm }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 sm:items-center sm:p-4">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="review-title"
+        className="flex max-h-[90vh] w-full flex-col rounded-t-2xl bg-white shadow-2xl sm:max-w-lg sm:rounded-2xl"
+      >
+        <div className="border-b border-slate-200 px-5 py-4 sm:px-6">
+          <h2 id="review-title" className="text-lg font-bold text-slate-900">
+            Confirm your details
+          </h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Please check everything below. You can go back and edit before sending.
+          </p>
+        </div>
+
+        <dl className="flex-1 divide-y divide-slate-100 overflow-y-auto px-5 sm:px-6">
+          {REVIEW_FIELDS.map(([key, label]) => (
+            <div key={key} className="grid grid-cols-5 gap-2 py-2.5 text-sm">
+              <dt className="col-span-2 text-slate-500">{label}</dt>
+              <dd className="col-span-3 break-words font-medium text-slate-900">
+                {record[key] || "—"}
+              </dd>
+            </div>
+          ))}
+        </dl>
+
+        <div className="space-y-3 border-t border-slate-200 px-5 py-4 sm:px-6">
+          {error && (
+            <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
+            </p>
+          )}
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={onEdit}
+              disabled={submitting}
+              className="rounded-xl border border-slate-300 bg-white px-6 py-3 text-base font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:opacity-50"
+            >
+              Edit details
+            </button>
+            <button
+              type="button"
+              onClick={onConfirm}
+              disabled={submitting}
+              className="flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-brand-700 focus:outline-none focus:ring-4 focus:ring-brand-100 disabled:opacity-70"
+            >
+              {submitting ? (
+                <>
+                  <Spinner />
+                  Submitting…
+                </>
+              ) : (
+                "Confirm & submit"
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ------------------------------------------------------------------
    COMPONENT
    ------------------------------------------------------------------ */
@@ -135,6 +249,7 @@ export default function BioDataForm({ onSuccess }) {
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [confirming, setConfirming] = useState(false);
 
   const inputClass = (key) => `${baseInput} ${errors[key] ? errInput : okInput}`;
   const errorProps = (key) => ({
@@ -149,7 +264,8 @@ export default function BioDataForm({ onSuccess }) {
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
-  const handleSubmit = async (e) => {
+  // Step 1: validate, then open the confirmation screen. Nothing is sent yet.
+  const handleSubmit = (e) => {
     e.preventDefault();
     setSubmitError("");
 
@@ -160,38 +276,28 @@ export default function BioDataForm({ onSuccess }) {
       document.getElementById(firstInvalid)?.focus();
       return;
     }
+    setConfirming(true);
+  };
+
+  const closeReview = () => {
+    if (submitting) return;
+    setConfirming(false);
+    setSubmitError("");
+  };
+
+  // Step 2: the user confirmed on the review screen, so send the data.
+  const sendSubmission = async () => {
+    setSubmitError("");
 
     if (SCRIPT_URL.includes("PASTE_")) {
-      setSubmitError(
-        "This form isn't connected yet. Please contact the Alumni Association.",
-      );
+      setSubmitError("This form isn't connected yet. Please contact the Alumni Association.");
       return;
     }
 
     setSubmitting(true);
-
-    const birthday =
-      values.birthdayDay && values.birthdayMonth
-        ? `${values.birthdayDay} ${values.birthdayMonth}`
-        : "";
-
+    const record = buildRecord(values);
     const payload = new URLSearchParams({
-      fullName: values.fullName.trim(),
-      nickname: values.nickname.trim(),
-      gender: values.gender,
-      birthday,
-      email: values.email.trim(),
-      phone: values.phone.trim(),
-      city: values.city.trim(),
-      country: values.country,
-      gradYear: values.gradYear,
-      classArm: values.classArm.trim(),
-      house: values.house,
-      post: values.post.trim(),
-      occupation: values.occupation.trim(),
-      qualification: values.qualification,
-      willingToSupport: values.willingToSupport,
-      consent: values.consent ? "Yes" : "No",
+      ...record,
       timestamp: new Date().toISOString(),
     });
 
@@ -202,7 +308,7 @@ export default function BioDataForm({ onSuccess }) {
         mode: "no-cors",
         body: payload,
       });
-      onSuccess({ fullName: values.fullName.trim(), email: values.email.trim() });
+      onSuccess({ fullName: record.fullName, email: record.email });
     } catch {
       setSubmitError(
         "We couldn't send your bio-data. Check your internet connection and try again.",
@@ -226,7 +332,7 @@ export default function BioDataForm({ onSuccess }) {
         noValidate
         className="mx-auto max-w-2xl space-y-8 rounded-2xl bg-white p-5 shadow-lg shadow-slate-200/70 ring-1 ring-slate-200 sm:p-8"
       >
-        {submitError && (
+        {submitError && !confirming && (
           <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {submitError}
           </div>
@@ -379,6 +485,27 @@ export default function BioDataForm({ onSuccess }) {
               ))}
             </select>
           </Field>
+
+          {values.country === "Other" && (
+            <Field
+              id="countryOther"
+              label="Type your country"
+              required
+              error={errors.countryOther}
+              className="sm:col-span-2"
+            >
+              <input
+                id="countryOther"
+                name="countryOther"
+                type="text"
+                autoComplete="country-name"
+                value={values.countryOther}
+                onChange={handleChange}
+                className={inputClass("countryOther")}
+                {...errorProps("countryOther")}
+              />
+            </Field>
+          )}
         </Section>
 
         <Section title="School days">
@@ -517,10 +644,18 @@ export default function BioDataForm({ onSuccess }) {
           )}
         </section>
 
+        {!values.consent && (
+          <p className="-mb-4 text-center text-sm text-slate-500">
+            Tick the consent box above to enable submission.
+          </p>
+        )}
+
         <button
           type="submit"
-          disabled={submitting}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-6 py-3.5 text-base font-semibold text-white shadow-sm transition hover:bg-brand-700 focus:outline-none focus:ring-4 focus:ring-brand-100 disabled:cursor-not-allowed disabled:opacity-70"
+          disabled={submitting || !values.consent}
+          className={`flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-6 py-3.5 text-base font-semibold text-white shadow-sm transition hover:bg-brand-700 focus:outline-none focus:ring-4 focus:ring-brand-100 disabled:cursor-not-allowed ${
+            values.consent ? "disabled:opacity-70" : "opacity-40 blur-[1.5px] grayscale"
+          }`}
         >
           {submitting ? (
             <>
@@ -532,6 +667,16 @@ export default function BioDataForm({ onSuccess }) {
           )}
         </button>
       </form>
+
+      {confirming && (
+        <ReviewModal
+          record={buildRecord(values)}
+          error={submitError}
+          submitting={submitting}
+          onEdit={closeReview}
+          onConfirm={sendSubmission}
+        />
+      )}
     </div>
   );
 }
