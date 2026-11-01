@@ -25,7 +25,7 @@
  * about 1,500/day on Google Workspace.
  */
 
-const SPREADSHEET_ID = ""; // blank = the spreadsheet this script is attached to
+const SPREADSHEET_ID = "11DuagWoOo6rpN98rA9LAxzPbNpwpKOmRdAn8npW0TpI"; // the sheet to save responses into
 const SHEET_NAME = "Responses";
 const ASSOCIATION_NAME = "Alumni Association"; // shown in the email
 const EMAIL_SUBJECT = "Your Alumni Bio-Data submission";
@@ -114,6 +114,11 @@ function getSheet() {
   const ss = SPREADSHEET_ID
     ? SpreadsheetApp.openById(SPREADSHEET_ID)
     : SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) {
+    // Happens when the script was created at script.google.com instead of from
+    // Extensions > Apps Script in the sheet. Fix by setting SPREADSHEET_ID.
+    throw new Error("No spreadsheet found. Set SPREADSHEET_ID at the top of this file.");
+  }
   return ss.getSheetByName(SHEET_NAME) || ss.insertSheet(SHEET_NAME);
 }
 

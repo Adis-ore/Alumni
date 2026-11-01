@@ -4,7 +4,8 @@ import { SCRIPT_URL } from "../config.js";
 /* ------------------------------------------------------------------
    EDITABLE OPTIONS — change these arrays to update the dropdowns
    ------------------------------------------------------------------ */
-const START_YEAR = 2008; // first graduation year offered; the list runs up to the current year
+const START_YEAR = 1990; // first graduation year offered
+const END_YEAR = 2010; // last graduation year offered
 const HOUSES = ["HOUSE 1", "HOUSE 2", "HOUSE 3", "HOUSE 4"];
 const QUALIFICATIONS = [
   "SSCE",
@@ -24,10 +25,9 @@ const MONTHS = [
 ];
 const DAYS = Array.from({ length: 31 }, (_, i) => String(i + 1));
 
-const CURRENT_YEAR = new Date().getFullYear();
 const GRAD_YEARS = Array.from(
-  { length: CURRENT_YEAR - START_YEAR + 1 },
-  (_, i) => String(CURRENT_YEAR - i), // newest first
+  { length: END_YEAR - START_YEAR + 1 },
+  (_, i) => String(END_YEAR - i), // newest first
 );
 
 const INITIAL_VALUES = {

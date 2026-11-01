@@ -28,3 +28,12 @@
 .animate-fade-up {
   animation: fade-up 0.6s ease-out 0.3s both;
 }
+
+@keyframes fill-bar {
+  0% { transform: scaleX(0); }
+  100% { transform: scaleX(1); }
+}
+
+.animate-fill-bar {
+  animation: fill-bar 5s linear both;
+}
