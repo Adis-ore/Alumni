@@ -1,3 +1,5 @@
+import { SCHOOL_NAME } from "../config.js";
+
 export default function ThankYou({ firstName, email, onReset }) {
   return (
     <section className="mx-auto flex w-full max-w-2xl flex-col items-center px-4 py-16 text-center sm:py-24">
@@ -25,7 +27,7 @@ export default function ThankYou({ firstName, email, onReset }) {
           <span className="font-semibold text-slate-800 break-all">{email}</span>.
         </p>
         <p className="text-base text-slate-600 sm:text-lg">
-          Welcome back to the family — Alumni Association.
+          Welcome back to the family — {SCHOOL_NAME} Alumni Association.
         </p>
       </div>
 

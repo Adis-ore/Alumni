@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { SCRIPT_URL } from "../config.js";
+import { SCRIPT_URL, SCHOOL_NAME } from "../config.js";
 
 /* ------------------------------------------------------------------
    EDITABLE OPTIONS — change these arrays to update the dropdowns
@@ -361,7 +361,7 @@ export default function BioDataForm({ onSuccess }) {
     <div className="px-4 py-8 sm:py-12">
       <header className="mx-auto mb-8 flex max-w-2xl flex-col items-center text-center">
         <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
-          Alumni Association
+          {SCHOOL_NAME} Alumni Association
         </h1>
         <p className="mt-1 text-lg font-medium text-brand-600">Alumni Bio-Data Form</p>
         <p className="mt-2 text-sm text-slate-500">Takes about 2 minutes.</p>
@@ -672,7 +672,7 @@ export default function BioDataForm({ onSuccess }) {
               className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer accent-brand-600 focus:ring-4 focus:ring-brand-100"
             />
             <span>
-              I agree that my details can be stored and used by the Alumni
+              I agree that my details can be stored and used by the {SCHOOL_NAME} Alumni
               Association.
               <span className="ml-0.5 text-red-500" aria-hidden="true">*</span>
             </span>

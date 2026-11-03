@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { SCHOOL_NAME } from "../config.js";
 
 const WELCOME_MS = 5000;
 
@@ -27,7 +28,7 @@ export default function Welcome({ onDone }) {
         Welcome
       </h1>
       <p className="animate-fade-up mt-3 text-lg text-slate-600 motion-reduce:animate-none">
-        to the Alumni Association
+        to the {SCHOOL_NAME} Alumni Association
       </p>
 
       <div className="mt-10 h-1.5 w-56 overflow-hidden rounded-full bg-slate-200">

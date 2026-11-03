@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import BioDataForm from "./components/BioDataForm.jsx";
 import ThankYou from "./components/ThankYou.jsx";
 import Welcome from "./components/Welcome.jsx";
+import { SCHOOL_NAME } from "./config.js";
 
 const CURRENT_YEAR = new Date().getFullYear();
 const WELCOMED_KEY = "alumni-welcomed";
@@ -53,7 +54,7 @@ export default function App() {
       <main className="flex-1">{content}</main>
 
       <footer className="px-4 pb-8 pt-4 text-center text-xs text-slate-500">
-        © {CURRENT_YEAR} Alumni Association
+        © {CURRENT_YEAR} {SCHOOL_NAME} Alumni Association
       </footer>
     </div>
   );
