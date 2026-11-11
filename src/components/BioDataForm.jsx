@@ -4,7 +4,7 @@ import { SCRIPT_URL, SCHOOL_NAME } from "../config.js";
 /* ------------------------------------------------------------------
    EDITABLE OPTIONS — change these arrays to update the dropdowns
    ------------------------------------------------------------------ */
-const START_YEAR = 1990; // first graduation year offered
+const START_YEAR = 1984; // first graduation year offered
 const END_YEAR = 2010; // last graduation year offered
 const HOUSES = ["HOUSE 1", "HOUSE 2", "HOUSE 3", "HOUSE 4"];
 const QUALIFICATIONS = [
